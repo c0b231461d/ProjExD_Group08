@@ -34,7 +34,7 @@ class Snake:
             
 class Score:
     """
-    同じ葉っぱの形を作れたらScore+1
+    Scoreに関するクラス
     """
     def __init__(self):
         self.font = pg.font.Font(None, 25)
