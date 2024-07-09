@@ -23,6 +23,7 @@ class Snake:
             # 体を更新
             self.body.appendleft(new_head)
             self.body.pop()
+            # self.move = False
 
     def change_direction(self, direction):
         self.direction = direction
@@ -31,14 +32,25 @@ class Snake:
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
 
+def Jamp(direction:tuple):
+    """
+    青虫緊急回避プログラム
+    引数:向いている方向の情報
+    戻り値:ジャンプのフラグのboolと移動距離を上げた方向情報
+    """ 
+    return True, (direction[0]*2, direction[1]*2)
+
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
     snake = Snake()
+    jampflg = False
+    keep_move_direction = None
 
     while True:
-        move_direction = None  # キーが押されている場合の移動方向
+        if jampflg!= True:
+            move_direction = None  # キーが押されている場合の移動方向
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
@@ -51,14 +63,18 @@ def main():
                     move_direction = (0, SIZE)
                 elif event.key == pg.K_d:
                     move_direction = (SIZE, 0)
+                elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                    jampflg, move_direction = Jamp(keep_move_direction)
             elif event.type == pg.KEYUP:
                 if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
                     snake.move = False  # キーが離されたら停止
 
         if move_direction:
+            keep_move_direction = move_direction
             snake.change_direction(move_direction)
             snake.move = True  # キーが押されている間は移動
 
+        jampflg = False
         snake.update()
         screen.blit(img, [0, 0])
         snake.draw(screen)
