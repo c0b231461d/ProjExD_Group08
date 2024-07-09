@@ -35,7 +35,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
-    snake = Insect()
+    insect = Insect()
 
     while True:
         move_direction = None  # キーが押されている場合の移動方向
@@ -53,15 +53,15 @@ def main():
                     move_direction = (SIZE, 0)
             elif event.type == pg.KEYUP:
                 if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
-                    snake.move = False  # キーが離されたら停止
+                    insect.move = False  # キーが離されたら停止
 
         if move_direction:
-            snake.change_direction(move_direction)
-            snake.move = True  # キーが押されている間は移動
+            insect.change_direction(move_direction)
+            insect.move = True  # キーが押されている間は移動
 
-        snake.update()
+        insect.update()
         screen.blit(img, [0, 0])
-        snake.draw(screen)
+        insect.draw(screen)
         pg.display.update()
         clock.tick(10)
 
