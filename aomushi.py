@@ -30,12 +30,26 @@ class Snake:
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
+            
+class Timer():
+    def __init__(self):
+        self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
+        self.font = pg.font.Font(None, 25)  # フォントの設定
+        self.color = (0, 0, 0)  # 文字の色
+        self.rect = pg.Rect(WIDTH - 120, HEIGHT - 50, 100, 30)  # タイマーの位置とサイズの設定
+
+    def update(self, screen):
+        elapsed_time = (pg.time.get_ticks() - self.start_time) // 1000  # 経過時間の計算（秒単位）
+        timer_str = f"Timer: {elapsed_time} sec"  # 表示する文字列の作成
+        timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
+        screen.blit(timer_surface, self.rect)  # 画面に描画
 
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
     snake = Snake()
+    timer = Timer()
 
     while True:
         move_direction = None  # キーが押されている場合の移動方向
@@ -62,6 +76,7 @@ def main():
         snake.update()
         screen.blit(img, [0, 0])
         snake.draw(screen)
+        timer.update(screen)
         pg.display.update()
         clock.tick(10)
 
