@@ -10,6 +10,9 @@ HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
 
 class Insect:
+    """
+    青虫に関するクラス
+    """
     def __init__(self):
         self.body = deque([(WIDTH//2, HEIGHT-50), (WIDTH//2-SIZE, HEIGHT-50), (WIDTH//2-2*SIZE, HEIGHT-50)])
         self.direction = (SIZE, 0)  # 初期の移動方向は右
@@ -63,7 +66,7 @@ def main():
         screen.blit(img, [0, 0])
         insect.draw(screen)
         pg.display.update()
-        clock.tick(10)
+        clock.tick(50)
 
 if __name__ == "__main__":
     pg.init()
