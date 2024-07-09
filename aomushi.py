@@ -30,12 +30,32 @@ class Snake:
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
+            
+            
+class Score:
+    """
+    同じ葉っぱの形を作れたらScore+1
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 25)
+        self.color = (0, 0, 255)
+        self.value = 0
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 50, HEIGHT-25
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
 
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
+    
     snake = Snake()
+    score = Score()
 
     while True:
         move_direction = None  # キーが押されている場合の移動方向
@@ -62,8 +82,9 @@ def main():
         snake.update()
         screen.blit(img, [0, 0])
         snake.draw(screen)
+        score.update(screen)
         pg.display.update()
-        clock.tick(10)
+        clock.tick(15)
 
 if __name__ == "__main__":
     pg.init()
