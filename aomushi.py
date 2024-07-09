@@ -9,12 +9,12 @@ WIDTH = 500  # ゲームウィンドウの幅
 HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
 
-class Snake:
+class Insect:
     def __init__(self):
-        self.body = deque([(WIDTH//2, HEIGHT//2), (WIDTH//2-SIZE, HEIGHT//2), (WIDTH//2-2*SIZE, HEIGHT//2)])
+        self.body = deque([(WIDTH//2, HEIGHT-50), (WIDTH//2-SIZE, HEIGHT-50), (WIDTH//2-2*SIZE, HEIGHT-50)])
         self.direction = (SIZE, 0)  # 初期の移動方向は右
-        self.move = False  # 蛇が動くかどうかを示すフラグ
-        self.body_image = pg.image.load("fig/body_L.png")  # 蛇の体の画像を読み込む
+        self.move = False  # 虫が動くかどうかを示すフラグ
+        self.body_image = pg.image.load("fig/body_L.png")  # 虫の体の画像を読み込む
 
     def update(self):
         if self.move:  # moveがTrueのときだけ更新する
@@ -35,7 +35,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
-    snake = Snake()
+    snake = Insect()
 
     while True:
         move_direction = None  # キーが押されている場合の移動方向
