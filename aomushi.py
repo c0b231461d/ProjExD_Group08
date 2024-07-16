@@ -266,7 +266,9 @@ def main():
     dies = pg.sprite.Group()
     menu = True
     running = True
-
+    pg.mixer.music.load("music/nature.mp3")
+    pg.mixer.music.play(loops=5,start=0.0)
+    
     while running:
         if menu:
             draw_menu(screen)
