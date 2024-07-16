@@ -160,7 +160,7 @@ def main():
                 time.sleep(1)
                 fonto = pg.font.Font(None,80)
                 txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))
-                screen.blit(txt,[WIDTH/2-250,HEIGHT/2])
+                screen.blit(txt,[WIDTH/2-220,HEIGHT/2])
                 pg.display.update()
                 time.sleep(5)
                 break
