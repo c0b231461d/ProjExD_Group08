@@ -9,6 +9,7 @@ WIDTH = 500  # ゲームウィンドウの幅
 HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
 
+
 class Insect(pg.sprite.Sprite):
     """
     青虫に関するクラス
@@ -24,7 +25,7 @@ class Insect(pg.sprite.Sprite):
     
     def __init__(self):
         super().__init__()
-        self.body = deque([(WIDTH//2, HEIGHT-50), (WIDTH//2-SIZE, HEIGHT-50), (WIDTH//2-2*SIZE, HEIGHT-50)])  # 初期青虫
+        self.body = deque([[WIDTH//2, HEIGHT-50], [WIDTH//2-SIZE, HEIGHT-50], [WIDTH//2-2*SIZE, HEIGHT-50]])  # 初期青虫
         self.direction = (0, 0)  # 初期の移動方向
         self.body_image = pg.image.load("fig/body_L.png")  # 虫の体の画像を読み込む
         self.jump_velocity = 0  # ジャンプの速度
@@ -51,17 +52,27 @@ class Insect(pg.sprite.Sprite):
             sum_mv[1] += self.jump_velocity
         
         # 新しいヘッドを作成
-        new_head = (self.body[0][0] + sum_mv[0], self.body[0][1] + sum_mv[1])
+        new_head = [self.body[0][0] + sum_mv[0], self.body[0][1] + sum_mv[1]]
         
         # ジャンプが元の位置に戻ったらジャンプを止める
         if self.is_jumping and new_head[1] >= self.start_y:
-            new_head = (new_head[0], self.start_y)
+            new_head = [new_head[0], self.start_y]
             self.is_jumping = False
             self.jump_velocity = 0
         
         # 体を更新
         self.body.appendleft(new_head)
         self.body.pop()
+        
+        # 画面外に行かないようにする
+        if 0 > self.body[0][0]:
+            self.body[0][0] = 0
+        if self.body[0][0] > WIDTH - SIZE:
+            self.body[0][0] = WIDTH - SIZE
+        if 0 > self.body[0][1]:
+            self.body[0][1] = 0
+        if self.body[0][1] > HEIGHT - SIZE:
+            self.body[0][1] = HEIGHT - SIZE
         
         # 矩形の位置を更新
         self.rect.topleft = self.body[0]
@@ -103,6 +114,10 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
+    
+
+    
+
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
@@ -112,7 +127,6 @@ def main():
     score = Score(timer)
 
     while True:
-        key_lst = pg.key.get_pressed()
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -125,6 +139,8 @@ def main():
         score.update(timer, screen)
         pg.display.update()
         clock.tick(50)
+
+
 
 if __name__ == "__main__":
     pg.init()
