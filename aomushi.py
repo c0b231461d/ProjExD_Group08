@@ -2,12 +2,91 @@ import os
 import sys
 import pygame as pg
 from collections import deque
+import time
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 WIDTH = 500  # ゲームウィンドウの幅
 HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
+
+def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
+    """
+    オブジェクトが画面内or画面外を判定し，真理値タプルを返す関数
+    引数：こうかとんや爆弾，ビームなどのRect
+    戻り値：横方向，縦方向のはみ出し判定結果（画面内：True／画面外：False）
+    """
+    yoko, tate = True, True
+    if obj_rct.left < 0 or WIDTH < obj_rct.right:
+        yoko = False
+    if obj_rct.top < 0 or HEIGHT < obj_rct.bottom:
+        tate = False
+    return yoko, tate
+
+class Bird():
+    """
+    こうかとんに関するクラス
+    """
+    delta = {  # 押下キーと移動量の辞書
+        pg.K_UP: (0, -1),
+        pg.K_DOWN: (0, +1),
+        pg.K_LEFT: (-1, 0),
+        pg.K_RIGHT: (+1, 0),
+    }
+
+    def __init__(self, num: int, xy: tuple[int, int]):
+        """
+        こうかとん画像Surfaceを生成する
+        引数1 num：こうかとん画像ファイル名の番号
+        引数2 xy：こうかとん画像の位置座標タプル
+        """
+        # super().__init__()
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.0)
+        img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
+        self.imgs = {
+            (+1, 0): img,  # 右
+            (+1, -1): pg.transform.rotozoom(img, 45, 1.0),  # 右上
+            (0, -1): pg.transform.rotozoom(img, 90, 1.0),  # 上
+            (-1, -1): pg.transform.rotozoom(img0, -45, 1.0),  # 左上
+            (-1, 0): img0,  # 左
+            (-1, +1): pg.transform.rotozoom(img0, 45, 1.0),  # 左下
+            (0, +1): pg.transform.rotozoom(img, -90, 1.0),  # 下
+            (+1, +1): pg.transform.rotozoom(img, -45, 1.0),  # 右下
+        }
+        self.dire = (+1, 0)
+        self.image = self.imgs[self.dire]
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+        self.speed=3
+        
+    def change_img(self, num: int, screen: pg.Surface):
+        """
+        こうかとん画像を切り替え，画面に転送する
+        引数1 num：こうかとん画像ファイル名の番号
+        引数2 screen：画面Surface
+        """
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.8)
+        screen.blit(self.image, self.rect)
+
+    def update(self, key_lst: list[bool], screen: pg.Surface):
+        """
+        押下キーに応じてこうかとんを移動させる
+        引数1 key_lst：押下キーの真理値リスト
+        引数2 screen：画面Surface
+        """
+        sum_mv = [0, 0]
+        for k, mv in __class__.delta.items():
+            if key_lst[k]:
+                sum_mv[0] += mv[0]
+                sum_mv[1] += mv[1]
+        self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
+        if check_bound(self.rect) != (True, True):
+            self.rect.move_ip(-self.speed*sum_mv[0], -self.speed*sum_mv[1])
+        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            self.dire = tuple(sum_mv)
+            self.image = self.imgs[self.dire]
+        
+        screen.blit(self.image, self.rect)
 
 class Timer():
     def __init__(self):
@@ -63,10 +142,12 @@ class Insect(pg.sprite.Sprite):
         self.is_jumping = False  # ジャンプ中かどうかのフラグ
         self.start_y = HEIGHT - 50  # ジャンプ開始時の初期位置
         self.rect = pg.Rect(self.body[0], (SIZE, SIZE))  # 初期の位置とサイズで矩形を作成
+        self.body_rects=[self.body_image.get_rect(topleft=segment)for segment in self.body]
 
     def update(self, key_lst: list[bool]):
         sum_mv = [0, 0]
         move_keys = [k for k in __class__.delta if key_lst[k]]
+        self.body_rects=[self.body_image.get_rect(topleft=segment)for segment in self.body]
 
         if len(move_keys) == 1:  # 1つの方向キーが押されている場合のみ移動
             k = move_keys[0]
@@ -154,6 +235,7 @@ def main():
     img = pg.image.load(f"fig/bg.png")
     insect = Insect()  # 虫
     timer = Timer()  # 時間 
+    bird = Bird(3,(WIDTH/2,HEIGHT/2))
     score = Score(timer)
     menu = True
     running = True
@@ -181,8 +263,24 @@ def main():
                 elif event.type == pg.KEYUP:
                     if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
                         insect.move = False  # キーが離されたら停止
+
+            # 青虫とこうかとんの衝突判定
+            for insect_b in insect.body_rects:
+                # print(insect_b)
+                if bird.rect.colliderect(insect_b):                
+                    screen.blit(img, [0, 0])
+                    bird.change_img(6,screen)               
+                    fonto = pg.font.Font(None,80)
+                    txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))
+                    screen.blit(txt,[WIDTH/2-220,HEIGHT/2])
+                    pg.display.update()
+                    pg.mixer.music.load("music/die_voice.mp3")
+                    pg.mixer.music.play(loops=0,start=0.0)
+                    time.sleep(5)
+                    return
             
             screen.blit(img, [0, 0])
+            bird.update(key_lst,screen)  # こうかとん
             insect.update(key_lst)  # 青虫
             insect.draw(screen)  # 青虫
             timer.update(screen)  # 時間
