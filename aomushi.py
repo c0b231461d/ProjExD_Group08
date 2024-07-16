@@ -9,9 +9,10 @@ WIDTH = 500  # ゲームウィンドウの幅
 HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
 
+
 class Snake:
     def __init__(self):
-        self.body = deque([(WIDTH//2, HEIGHT//2), (WIDTH//2-SIZE, HEIGHT//2), (WIDTH//2-2*SIZE, HEIGHT//2)])
+        self.body = deque([[WIDTH//2, HEIGHT//2], [WIDTH//2-SIZE, HEIGHT//2], [WIDTH//2-2*SIZE, HEIGHT//2]])
         self.direction = (SIZE, 0)  # 初期の移動方向は右
         self.move = False  # 蛇が動くかどうかを示すフラグ
         self.body_image = pg.image.load("fig/body_L.png")  # 蛇の体の画像を読み込む
@@ -19,10 +20,24 @@ class Snake:
     def update(self):
         if self.move:  # moveがTrueのときだけ更新する
             # 新しいヘッドを作成
-            new_head = (self.body[0][0] + self.direction[0], self.body[0][1] + self.direction[1])
+            new_head = [self.body[0][0] + self.direction[0], self.body[0][1] + self.direction[1]]
             # 体を更新
+            self.move=False 
             self.body.appendleft(new_head)
             self.body.pop()
+            #画面外に行かないようにする
+            if 0 > self.body[0][0]:
+                self.body[0][0] = 0
+            if self.body[0][0] > 475:
+                self.body[0][0] = 475
+            if 0 > self.body[0][1]:
+                self.body[0][1] = 0
+            if self.body[0][1] > 475:
+                self.body[0][1] = 475
+                
+                   
+            
+            
 
     def change_direction(self, direction):
         self.direction = direction
@@ -30,6 +45,8 @@ class Snake:
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
+
+    
 
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -58,12 +75,14 @@ def main():
         if move_direction:
             snake.change_direction(move_direction)
             snake.move = True  # キーが押されている間は移動
+        
 
         snake.update()
         screen.blit(img, [0, 0])
         snake.draw(screen)
         pg.display.update()
         clock.tick(10)
+
 
 if __name__ == "__main__":
     pg.init()
