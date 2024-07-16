@@ -125,7 +125,6 @@ def main():
     img = pg.image.load(f"fig/bg.png")
     insect = Insect()
     bird = Bird(3, (100,100))
-    insects=[]
     
     while True:
         # print(insect.body)
@@ -154,24 +153,22 @@ def main():
         # 青虫とこうかとんの衝突判定
         for insect_b in insect.body_rects:
             # print(insect_b)
-            if bird.rect.colliderect(insect_b):
-                bird.change_img(6,screen)
-                pg.display.update()
-                time.sleep(1)
+            if bird.rect.colliderect(insect_b):                
+                screen.blit(img, [0, 0])
+                bird.change_img(6,screen)               
                 fonto = pg.font.Font(None,80)
                 txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))
                 screen.blit(txt,[WIDTH/2-220,HEIGHT/2])
                 pg.display.update()
                 time.sleep(5)
-                break
+                return
 
         
         insect.update()
         screen.blit(img, [0, 0])
         bird.update(key_lst, screen)
         insect.draw(screen)
-        
-        
+                
         pg.display.update()
         clock.tick(10)
 
