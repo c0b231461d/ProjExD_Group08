@@ -69,12 +69,30 @@ class Insect(pg.sprite.Sprite):
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
+            
+
+class Score:
+    """
+    ScoreとTimer連連携
+    """
+    def __init__(self, timer:Timer):
+        self.font = pg.font.Font(None, 25)
+        self.color = (0, 0, 255)
+        self.value = timer.time
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 50, HEIGHT-25
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)
 
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
     insect = Insect()
+    score = Score(timer)
 
     while True:
         key_lst = pg.key.get_pressed()
