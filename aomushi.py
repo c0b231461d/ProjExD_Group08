@@ -85,6 +85,23 @@ class Timer():
         timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
         screen.blit(timer_surface, self.rect)  # 画面に描画
                     
+            
+class Score:
+    """
+    ScoreとTimer連連携
+    """
+    def __init__(self, timer:Timer):
+        self.font = pg.font.Font(None, 25)
+        self.color = (0, 0, 255)
+        self.value = timer.time*2
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 50, HEIGHT-25
+
+    def update(self, timer:Timer, screen: pg.Surface):
+        self.value = timer.time*2
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)
 
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -92,8 +109,10 @@ def main():
     img = pg.image.load(f"fig/bg.png")
     insect = Insect()  # 虫
     timer = Timer()  # 時間 
+    score = Score(timer)
 
     while True:
+        key_lst = pg.key.get_pressed()
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -103,6 +122,7 @@ def main():
         insect.update(key_lst)  # 青虫
         insect.draw(screen)  # 青虫
         timer.update(screen)  # 時間
+        score.update(timer, screen)
         pg.display.update()
         clock.tick(50)
 
