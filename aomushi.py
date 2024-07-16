@@ -3,6 +3,7 @@ import sys
 import pygame as pg
 from collections import deque
 import time
+import random
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -40,7 +41,7 @@ class Bird():
         引数1 num：こうかとん画像ファイル名の番号
         引数2 xy：こうかとん画像の位置座標タプル
         """
-        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.0)
+        img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.75)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
             (+1, 0): img,  # 右
@@ -57,6 +58,8 @@ class Bird():
         self.rect = self.image.get_rect()
         self.rect.center = xy
         self.speed=3
+        self.status="Normal"
+        self.time = 0
         
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -64,7 +67,7 @@ class Bird():
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.5)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.0)
         screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
@@ -74,10 +77,16 @@ class Bird():
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        for k, mv in __class__.delta.items():
-            if key_lst[k]:
-                sum_mv[0] += mv[0]
-                sum_mv[1] += mv[1]
+        if self.status != "Freeze":
+            for k, mv in __class__.delta.items():
+                if key_lst[k]:
+                    sum_mv[0] += mv[0]
+                    sum_mv[1] += mv[1]
+        else:
+            self.time -= 1
+            if self.time <= 0:
+                self.status = "Normal"
+        
         self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
         if check_bound(self.rect) != (True, True):
             self.rect.move_ip(-self.speed*sum_mv[0], -self.speed*sum_mv[1])
@@ -243,16 +252,30 @@ class Die(pg.sprite.Sprite):
         self.image = self.imgs[0]
         self.rect = self.image.get_rect(center=obj.rect.center)
         self.life = life
+        
 
-    def update(self):
-        """
-        爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
-        爆発エフェクトを表現する
-        """
-        self.life -= 1
-        self.rect.centery -= 10
-        if self.life < 0:
-            self.kill()
+class Ice(pg.sprite.Sprite):
+    """
+    青虫専用アイテム
+    """
+    img = pg.transform.rotozoom(pg.image.load(f"fig/ice.PNG"), 0, 1.5)
+
+    def __init__(self):
+        super().__init__()
+        self.image = Ice.img
+        self.rect = self.image.get_rect()
+        self.rect.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
+
+    # def update(self):
+    #     """
+    #     爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
+    #     爆発エフェクトを表現する
+    #     """
+    #     self.life -= 1
+    #     self.rect.centery -= 10
+    #     if self.life < 0:
+    #         self.kill()
+    
 
 def main():
     pg.init()
@@ -264,10 +287,12 @@ def main():
     bird = Bird(3,(WIDTH/2,HEIGHT/2))
     score = Score(timer)
     dies = pg.sprite.Group()
+    ices = pg.sprite.Group()
+    tmr = 0
     menu = True
     running = True
     pg.mixer.music.load("music/nature.mp3")
-    pg.mixer.music.play(loops=5,start=0.0)
+    pg.mixer.music.play(loops=20,start=0.0)
     
     while running:
         if menu:
@@ -292,7 +317,19 @@ def main():
                 elif event.type == pg.KEYUP:
                     if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
                         insect.move = False  # キーが離されたら停止
-
+            
+            if tmr % 150 == 0:  # 150フレームに1回，アイテムを出現させる
+                ices.add(Ice())     
+                
+            if pg.sprite.spritecollide(insect, ices, True) and bird.status == "Normal":       
+                bird.status = "Freeze"
+                bird.time = 80  # フリーズタイム
+                score.miss += 1
+                
+            if pg.sprite.spritecollide(bird, ices, True) and bird.status == "Normal":       
+                bird.speed += 0.5   # こうかとん進化
+                score.miss -= 10
+                
             # 青虫とこうかとんの衝突判定
             for insect_b in insect.body_rects:
                 # print(insect_b)
@@ -300,15 +337,17 @@ def main():
                     screen.blit(img, [0, 0])
                     bird.change_img(6,screen)               
                     fonto = pg.font.Font(None,80)
-                    txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))
+                    txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))  # ゲームオーバータイトル
                     screen.blit(txt,[WIDTH/2-220,HEIGHT/2])
-                    dies.add(Die(insect, 50)) 
+                    txt1 = fonto.render(f"Score:{score.value}",True,(255,255,0))  # スコア
+                    screen.blit(txt1,[WIDTH/2 - 100,HEIGHT/2+100])
+                    dies.add(Die(insect, 50))  # 死亡エフェクト
                     dies.update()
                     dies.draw(screen)
                     pg.display.update()
-                    pg.mixer.music.load("music/die_voice.mp3")
+                    pg.mixer.music.load("music/die_voice.mp3")  # 音楽
                     pg.mixer.music.play(loops=0,start=0.0)
-                    time.sleep(5)
+                    time.sleep(5)  # 5フレーム停止
                     return
             
             screen.blit(img, [0, 0])
@@ -316,8 +355,10 @@ def main():
             insect.update(key_lst)  # 青虫
             insect.draw(screen)  # 青虫
             timer.update(screen)  # 時間
+            ices.draw(screen)
             score.update(timer, screen)
             pg.display.update()
+            tmr += 1
             clock.tick(50)
 
 if __name__ == "__main__":
