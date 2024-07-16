@@ -9,10 +9,7 @@ WIDTH = 500  # ゲームウィンドウの幅
 HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
 
-
-
 class Timer():
-    
     def __init__(self):
         self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
         self.font = pg.font.Font(None, 25)  # フォントの設定
@@ -26,7 +23,6 @@ class Timer():
         timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
         screen.blit(timer_surface, self.rect)  # 画面に描画
                     
-            
 class Score:
     """
     ScoreとTimer連連携
@@ -44,7 +40,6 @@ class Score:
         self.value = timer.time*2 +self.miss
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
-
 
 class Insect(pg.sprite.Sprite):
     """
@@ -141,38 +136,59 @@ class Insect(pg.sprite.Sprite):
         score.miss -= 10
         self.body.appendleft(new_head)
         self.body.pop()
-            
 
+def draw_menu(screen):
+    """
+    特定のキーが押されると黒い画面からゲームがスタートされる
+    """
+    screen.fill((0, 0, 0))  # 黒で塗りつぶす
+    font = pg.font.Font(None, 36)
+    text_start = font.render("Press SPACE", True, (255, 255, 255))
+    text_rect = text_start.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+    screen.blit(text_start, text_rect)
 
 def main():
+    pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
     insect = Insect()  # 虫
     timer = Timer()  # 時間 
     score = Score(timer)
+    menu = True
+    running = True
 
-    while True:
-        key_lst = pg.key.get_pressed()
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                return
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_TAB and score.value >= 10:
-                    insect.dash(key_lst, score)
-            elif event.type == pg.KEYUP:
-                if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
-                    insect.move = False  # キーが離されたら停止
+    while running:
+        if menu:
+            draw_menu(screen)
+            pg.display.update()
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    running = False
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_SPACE:
+                        menu = False
+
+        else:
+            key_lst = pg.key.get_pressed()
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    running = False
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_TAB and score.value >= 10:
+                        insect.dash(key_lst, score)
+                elif event.type == pg.KEYUP:
+                    if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
+                        insect.move = False  # キーが離されたら停止
             
-        screen.blit(img, [0, 0])
-        insect.update(key_lst)  # 青虫
-        insect.draw(screen)  # 青虫
-        timer.update(screen)  # 時間
-        score.update(timer, screen)
-        pg.display.update()
-        clock.tick(50)
-
-
+            screen.blit(img, [0, 0])
+            insect.update(key_lst)  # 青虫
+            insect.draw(screen)  # 青虫
+            timer.update(screen)  # 時間
+            score.update(timer, screen)
+            pg.display.update()
+            clock.tick(50)
 
 if __name__ == "__main__":
     pg.init()
