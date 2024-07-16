@@ -104,40 +104,8 @@ class Insect(pg.sprite.Sprite):
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
-            
-            
-class Timer():
-    def __init__(self):
-        self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
-        self.font = pg.font.Font(None, 25)  # フォントの設定
-        self.color = (0, 0, 0)  # 文字の色
-        self.rect = pg.Rect(WIDTH - 120, HEIGHT - 50, 100, 30)  # タイマーの位置とサイズの設定
-        self.time = 0
 
-    def update(self, screen):
-        self.time = (pg.time.get_ticks() - self.start_time) // 1000  # 経過時間の計算（秒単位）
-        timer_str = f"Timer: {self.time} sec"  # 表示する文字列の作成
-        timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
-        screen.blit(timer_surface, self.rect)  # 画面に描画
-                    
-            
-class Score:
-    """
-    ScoreとTimer連連携
-    """
-    def __init__(self, timer:Timer):
-        self.font = pg.font.Font(None, 25)
-        self.color = (0, 0, 255)
-        self.value = timer.time*2
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        self.rect = self.image.get_rect()
-        self.rect.center = 50, HEIGHT-25
-
-    def update(self, timer:Timer, screen: pg.Surface):
-        self.value = timer.time*2
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        screen.blit(self.image, self.rect)
-
+    
     def dash(self, key_lst:list[bool], score:Score):
         """
         青虫緊急回避プログラム
