@@ -40,7 +40,6 @@ class Bird():
         引数1 num：こうかとん画像ファイル名の番号
         引数2 xy：こうかとん画像の位置座標タプル
         """
-        # super().__init__()
         img0 = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.0)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
@@ -65,7 +64,7 @@ class Bird():
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.8)
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 1.5)
         screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
@@ -104,7 +103,8 @@ class Timer():
                     
 class Score:
     """
-    ScoreとTimer連連携
+    Scoreに関するクラス
+    Score_valueは、Timer_timeと連携している。
     """
     def __init__(self, timer:Timer):
         self.font = pg.font.Font(None, 25)
@@ -228,6 +228,32 @@ def draw_menu(screen):
     text_rect = text_start.get_rect(center=(WIDTH // 2, HEIGHT // 2))
     screen.blit(text_start, text_rect)
 
+class Die(pg.sprite.Sprite):
+    """
+    Dieに関するクラス
+    """
+    def __init__(self, obj: "Insect", life: int):
+        """
+        虫が死ぬエフェクトを生成する
+        引数1 虫のインスタンス
+        引数2 life：爆発時間
+        """
+        super().__init__()
+        self.imgs = [ pg.transform.rotozoom(pg.image.load(f"fig/die.PNG"), 0, 1.5)]  # 例として4フレームの爆発画像
+        self.image = self.imgs[0]
+        self.rect = self.image.get_rect(center=obj.rect.center)
+        self.life = life
+
+    def update(self):
+        """
+        爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
+        爆発エフェクトを表現する
+        """
+        self.life -= 1
+        self.rect.centery -= 10
+        if self.life < 0:
+            self.kill()
+
 def main():
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -237,6 +263,7 @@ def main():
     timer = Timer()  # 時間 
     bird = Bird(3,(WIDTH/2,HEIGHT/2))
     score = Score(timer)
+    dies = pg.sprite.Group()
     menu = True
     running = True
 
@@ -273,6 +300,9 @@ def main():
                     fonto = pg.font.Font(None,80)
                     txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))
                     screen.blit(txt,[WIDTH/2-220,HEIGHT/2])
+                    dies.add(Die(insect, 50)) 
+                    dies.update()
+                    dies.draw(screen)
                     pg.display.update()
                     pg.mixer.music.load("music/die_voice.mp3")
                     pg.mixer.music.play(loops=0,start=0.0)
