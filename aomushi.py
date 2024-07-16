@@ -32,6 +32,9 @@ class Insect:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
 
 def draw_menu(screen):
+    """
+    特定のキーが押されると黒い画面からゲームがスタートされる
+    """
     screen.fill((0, 0, 0))  # 黒で塗りつぶす
     font = pg.font.Font(None, 36)
     text_start = font.render("Press SPACE", True, (255, 255, 255))
