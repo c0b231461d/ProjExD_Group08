@@ -10,6 +10,42 @@ HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
 
 
+
+class Timer():
+    
+    def __init__(self):
+        self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
+        self.font = pg.font.Font(None, 25)  # フォントの設定
+        self.color = (0, 0, 0)  # 文字の色
+        self.rect = pg.Rect(WIDTH - 120, HEIGHT - 50, 100, 30)  # タイマーの位置とサイズの設定
+        self.time = 0
+
+    def update(self, screen):
+        self.time = (pg.time.get_ticks() - self.start_time) // 1000  # 経過時間の計算（秒単位）
+        timer_str = f"Timer: {self.time} sec"  # 表示する文字列の作成
+        timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
+        screen.blit(timer_surface, self.rect)  # 画面に描画
+                    
+            
+class Score:
+    """
+    ScoreとTimer連連携
+    """
+    def __init__(self, timer:Timer):
+        self.font = pg.font.Font(None, 25)
+        self.color = (0, 0, 255)
+        self.value = timer.time*2
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 50, HEIGHT-25
+        self.miss = 0
+
+    def update(self, timer:Timer, screen: pg.Surface):
+        self.value = timer.time*2 +self.miss
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
+
 class Insect(pg.sprite.Sprite):
     """
     青虫に関するクラス
@@ -39,8 +75,8 @@ class Insect(pg.sprite.Sprite):
 
         if len(move_keys) == 1:  # 1つの方向キーが押されている場合のみ移動
             k = move_keys[0]
-            sum_mv[0] += __class__.delta[k][0]
-            sum_mv[1] += __class__.delta[k][1]
+            sum_mv[0] += __class__.delta[k][0]//2
+            sum_mv[1] += __class__.delta[k][1]//2
         
         if key_lst[pg.K_SPACE] and not self.is_jumping:
             self.jump_velocity = __class__.jump_height
@@ -80,43 +116,33 @@ class Insect(pg.sprite.Sprite):
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
-            
-            
-class Timer():
-    def __init__(self):
-        self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
-        self.font = pg.font.Font(None, 25)  # フォントの設定
-        self.color = (0, 0, 0)  # 文字の色
-        self.rect = pg.Rect(WIDTH - 120, HEIGHT - 50, 100, 30)  # タイマーの位置とサイズの設定
-        self.time = 0
-
-    def update(self, screen):
-        self.time = (pg.time.get_ticks() - self.start_time) // 1000  # 経過時間の計算（秒単位）
-        timer_str = f"Timer: {self.time} sec"  # 表示する文字列の作成
-        timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
-        screen.blit(timer_surface, self.rect)  # 画面に描画
-                    
-            
-class Score:
-    """
-    ScoreとTimer連連携
-    """
-    def __init__(self, timer:Timer):
-        self.font = pg.font.Font(None, 25)
-        self.color = (0, 0, 255)
-        self.value = timer.time*2
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        self.rect = self.image.get_rect()
-        self.rect.center = 50, HEIGHT-25
-
-    def update(self, timer:Timer, screen: pg.Surface):
-        self.value = timer.time*2
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        screen.blit(self.image, self.rect)
-
     
+    def dash(self, key_lst:list[bool], score:Score):
+        """
+        引数１：移動のリスト
+        引数２：スコア
+        青虫緊急回避プログラム
+        戻り値:無し
+        """ 
+        sum_mv = [0, 0]
+        move_keys = [k for k in __class__.delta if key_lst[k]]
 
-    
+        if len(move_keys) == 1:  # 1つの方向キーが押されている場合のみ移動
+            k = move_keys[0]
+            sum_mv[0] += __class__.delta[k][0]*4
+            sum_mv[1] += __class__.delta[k][1]*4
+        if self.is_jumping:
+            self.jump_velocity += __class__.gravity
+            sum_mv[1] += self.jump_velocity
+        
+        # 新しいヘッドを作成
+        new_head = (self.body[0][0] + sum_mv[0], self.body[0][1] + sum_mv[1])
+
+        score.miss -= 10
+        self.body.appendleft(new_head)
+        self.body.pop()
+            
+
 
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -131,6 +157,12 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_TAB and score.value >= 10:
+                    insect.dash(key_lst, score)
+            elif event.type == pg.KEYUP:
+                if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
+                    insect.move = False  # キーが離されたら停止
             
         screen.blit(img, [0, 0])
         insect.update(key_lst)  # 青虫
