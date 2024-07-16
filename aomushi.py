@@ -274,6 +274,8 @@ def main():
                     txt = fonto.render("EAT AOMUSHI!!",True,(255,255,0))
                     screen.blit(txt,[WIDTH/2-220,HEIGHT/2])
                     pg.display.update()
+                    pg.mixer.music.load("music/die_voice.mp3")
+                    pg.mixer.music.play(loops=0,start=0.0)
                     time.sleep(5)
                     return
             
