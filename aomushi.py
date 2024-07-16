@@ -8,19 +8,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 WIDTH = 500  # ゲームウィンドウの幅
 HEIGHT = 500  # ゲームウィンドウの高さ
 SIZE = 20
-
-class Insect(pg.sprite.Sprite):
-    """
-    青虫に関するクラス
-    """
-    delta = {  # 押下キーと移動量の辞書
-        pg.K_w: (0, -SIZE),
-        pg.K_s: (0, SIZE),
-        pg.K_a: (-SIZE, 0),
-        pg.K_d: (SIZE, 0),        
-    }
-    jump_height = -25  # ジャンプの高さ
-    gravity = 5  # 重力の強さ
+    
     
 class Insect(pg.sprite.Sprite):
     """
@@ -36,14 +24,6 @@ class Insect(pg.sprite.Sprite):
     gravity = 5  # 重力の強さ
     
     def __init__(self):
-        super().__init__()
-        self.body = deque([(WIDTH//2, HEIGHT-50), (WIDTH//2-SIZE, HEIGHT-50), (WIDTH//2-2*SIZE, HEIGHT-50)])  # 初期青虫
-        self.direction = (0, 0)  # 初期の移動方向
-        self.body_image = pg.image.load("fig/body_L.png")  # 虫の体の画像を読み込む
-        self.jump_velocity = 0  # ジャンプの速度
-        self.is_jumping = False  # ジャンプ中かどうかのフラグ
-        self.start_y = HEIGHT - 50  # ジャンプ開始時の初期位置
-        self.rect = pg.Rect(self.body[0], (SIZE, SIZE))  # 初期の位置とサイズで矩形を作成
         super().__init__()
         self.body = deque([(WIDTH//2, HEIGHT-50), (WIDTH//2-SIZE, HEIGHT-50), (WIDTH//2-2*SIZE, HEIGHT-50)])  # 初期青虫
         self.direction = (0, 0)  # 初期の移動方向
@@ -90,29 +70,12 @@ class Insect(pg.sprite.Sprite):
     def draw(self, screen):
         for segment in self.body:
             screen.blit(self.body_image, segment)  # 各セグメントに画像を描画
-            
-            
-class Timer():
-    def __init__(self):
-        self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
-        self.font = pg.font.Font(None, 25)  # フォントの設定
-        self.color = (0, 0, 0)  # 文字の色
-        self.rect = pg.Rect(WIDTH - 120, HEIGHT - 50, 100, 30)  # タイマーの位置とサイズの設定
-        self.time = 0
-
-    def update(self, screen):
-        self.time = (pg.time.get_ticks() - self.start_time) // 1000  # 経過時間の計算（秒単位）
-        timer_str = f"Timer: {self.time} sec"  # 表示する文字列の作成
-        timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
-        screen.blit(timer_surface, self.rect)  # 画面に描画
-                    
-
+                        
 def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
     insect = Insect()  # 虫
-    timer = Timer()  # 時間 
 
     while True:
         key_lst = pg.key.get_pressed()
@@ -123,7 +86,6 @@ def main():
         screen.blit(img, [0, 0])
         insect.update(key_lst)  # 青虫
         insect.draw(screen)  # 青虫
-        timer.update(screen)  # 時間
         pg.display.update()
         clock.tick(50)
 
