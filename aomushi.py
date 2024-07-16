@@ -11,6 +11,7 @@ SIZE = 20
 
 
 class Timer():
+    
     def __init__(self):
         self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
         self.font = pg.font.Font(None, 25)  # フォントの設定
