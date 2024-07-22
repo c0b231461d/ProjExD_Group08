@@ -97,6 +97,9 @@ class Bird():
         screen.blit(self.image, self.rect)
 
 class Timer():
+    """
+    ゲーム時間経過に関するクラス
+    """
     def __init__(self):
         self.start_time = pg.time.get_ticks()  # ゲーム開始時の時間を取得
         self.font = pg.font.Font(None, 25)  # フォントの設定
@@ -106,7 +109,7 @@ class Timer():
 
     def update(self, screen):
         self.time = (pg.time.get_ticks() - self.start_time) // 1000  # 経過時間の計算（秒単位）
-        timer_str = f"Timer: {self.time} sec"  # 表示する文字列の作成
+        timer_str = f"Time: {self.time} sec"  # 表示する文字列の作成
         timer_surface = self.font.render(timer_str, True, self.color)  # 文字列を描画するSurfaceを作成
         screen.blit(timer_surface, self.rect)  # 画面に描画
                     
@@ -121,7 +124,7 @@ class Score:
         self.value = timer.time*2
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.center = 50, HEIGHT-25
+        self.rect.center = 50, HEIGHT-50
         self.miss = 0
 
     def update(self, timer:Timer, screen: pg.Surface):
@@ -152,6 +155,8 @@ class Insect(pg.sprite.Sprite):
         self.start_y = HEIGHT - 50  # ジャンプ開始時の初期位置
         self.rect = pg.Rect(self.body[0], (SIZE, SIZE))  # 初期の位置とサイズで矩形を作成
         self.body_rects=[self.body_image.get_rect(topleft=segment)for segment in self.body]
+        self.state = "Normal"  # 青虫状態
+        self.hyper_life = 0  #無敵時間
 
     def update(self, key_lst: list[bool]):
         sum_mv = [0, 0]
@@ -171,6 +176,18 @@ class Insect(pg.sprite.Sprite):
         if self.is_jumping:
             self.jump_velocity += __class__.gravity
             sum_mv[1] += self.jump_velocity
+        
+        if self.state == "hyper":
+            self.hyper_life -= 1
+            pixel = pg.PixelArray(self.body_image)
+            for y in range(self.body_image.get_height()):
+                for x in range(self.body_image.get_width()):
+                
+                    ### 色を書き換え
+                    pixel[x][y] = (255,0,0)
+            if self.hyper_life <=0:  #無敵終了判定
+                self.state = "Normal"
+                self.body_image = pg.image.load("fig/body_L.png")  # 虫の体の画像を読み込む
         
         # 新しいヘッドを作成
         new_head = [self.body[0][0] + sum_mv[0], self.body[0][1] + sum_mv[1]]
@@ -232,10 +249,22 @@ def draw_menu(screen):
     特定のキーが押されると黒い画面からゲームがスタートされる
     """
     screen.fill((0, 0, 0))  # 黒で塗りつぶす
+    FONT_PATH = "./fig/ipaexg.ttf"
+    font = pg.font.Font(FONT_PATH, 36)
+    text_title = font.render("青虫", True, (0, 255, 0))
+    text_rect = text_title.get_rect(center=(WIDTH // 2 - 100, HEIGHT // 2-50))
+    screen.blit(text_title, text_rect)
+    text_title1 = font.render("VS", True, (255, 255, 255))
+    text_rect = text_title1.get_rect(center=(WIDTH // 2 - 25, HEIGHT // 2-50))
+    screen.blit(text_title1, text_rect)
+    text_title2 = font.render("こうかとん", True, (0, 0, 255))
+    text_rect = text_title2.get_rect(center=(WIDTH // 2+100, HEIGHT // 2-50))
+    screen.blit(text_title2, text_rect)
     font = pg.font.Font(None, 36)
     text_start = font.render("Press SPACE", True, (255, 255, 255))
     text_rect = text_start.get_rect(center=(WIDTH // 2, HEIGHT // 2))
     screen.blit(text_start, text_rect)
+
 
 class Die(pg.sprite.Sprite):
     """
@@ -264,21 +293,11 @@ class Ice(pg.sprite.Sprite):
         super().__init__()
         self.image = Ice.img
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
-
-    # def update(self):
-    #     """
-    #     爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
-    #     爆発エフェクトを表現する
-    #     """
-    #     self.life -= 1
-    #     self.rect.centery -= 10
-    #     if self.life < 0:
-    #         self.kill()
+        self.rect.center = random.randint(10, WIDTH-10), random.randint(10, HEIGHT-10)
     
 
 def main():
-    pg.init()
+    pg.display.set_caption("青虫 VS こうかとん。自然界の食物連鎖")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     img = pg.image.load(f"fig/bg.png")
@@ -312,8 +331,10 @@ def main():
                 if event.type == pg.QUIT:
                     running = False
                 elif event.type == pg.KEYDOWN:
-                    if event.key == pg.K_TAB and score.value >= 10:
+                    if event.key == pg.K_LSHIFT and score.value >= 10:
                         insect.dash(key_lst, score)
+                        insect.hyper_life = 200
+                        insect.state = "hyper"
                 elif event.type == pg.KEYUP:
                     if event.key in [pg.K_w, pg.K_a, pg.K_s, pg.K_d]:
                         insect.move = False  # キーが離されたら停止
@@ -333,7 +354,7 @@ def main():
             # 青虫とこうかとんの衝突判定
             for insect_b in insect.body_rects:
                 # print(insect_b)
-                if bird.rect.colliderect(insect_b):                
+                if bird.rect.colliderect(insect_b) and insect.state == "Normal":                
                     screen.blit(img, [0, 0])
                     bird.change_img(6,screen)               
                     fonto = pg.font.Font(None,80)
